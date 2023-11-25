@@ -1,3 +1,23 @@
+# Pensieve
+
+To use this, you'll need to make a copy of your Signal Desktop data.  You must
+make a copy, so that there is no possibility of corrupting your Signal data.
+Quit Signal first, so that nothing is writing to the data while you are copying
+it.
+
+The location of that data is platform dependent. On MacOS, for instance, you
+could do
+```
+cp -a ~/Library/Application\ Support/Signal/ ~/data/signal/2023-11-23/
+```
+Adjust file paths as appropriate.  Next, set the STORAGE_PATH in `.env.local`:
+```
+STORAGE_PATH=~/data/signal/2023-11-23
+```
+Then you are ready to follow the instructions below.
+
+## Web docs follow
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
