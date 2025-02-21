@@ -1,9 +1,8 @@
-export interface TimelineItem {
+export interface TimelineItem<T = unknown> {
     id: string;
     timestamp: number;  // Unix timestamp in milliseconds
     kind: string;      // e.g., 'signal_message', 'tweet', etc.
-    content: any;      // Type varies by kind
-    source: string;    // Identifier for the data source
+    content: T;
     metadata: {
         [key: string]: any;
     };
@@ -21,5 +20,9 @@ export interface SignalMessageContent {
 
 export interface TimelineSource {
     kind: string;
-    getItems(startTime: number, endTime: number): Promise<TimelineItem[]>;
+    /**
+     * Get items from this source, starting from startTime and returning at most count items,
+     * ordered by timestamp (newest first)
+     */
+    getItems(startTime: number, count: number): Promise<TimelineItem[]>;
 } 

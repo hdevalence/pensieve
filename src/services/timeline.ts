@@ -13,17 +13,19 @@ export class TimelineService {
         this.sources.push(source);
     }
 
-    async getTimelineItems(startTime: number, endTime: number): Promise<TimelineItem[]> {
-        // Fetch items from all sources
+    async getTimelineItems(startTime: number, count: number): Promise<TimelineItem[]> {
+        // Request count items from each source to ensure we have enough after merging
         const itemPromises = this.sources.map(source =>
-            source.getItems(startTime, endTime)
+            source.getItems(startTime, count)
         );
 
         // Wait for all sources to return items
         const itemArrays = await Promise.all(itemPromises);
 
-        // Merge and sort all items by timestamp
-        const allItems = itemArrays.flat();
-        return allItems.sort((a, b) => a.timestamp - b.timestamp);
+        // Merge all items and sort by timestamp (newest first)
+        const allItems = itemArrays.flat().sort((a, b) => b.timestamp - a.timestamp);
+
+        // Return only the requested number of items
+        return allItems.slice(0, count);
     }
 } 

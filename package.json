@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "@signalapp/better-sqlite3": "^8.8.5",
     "antd": "^5.24.1",
     "crypto-js": "^4.2.0",
