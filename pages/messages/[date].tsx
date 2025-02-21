@@ -2,11 +2,11 @@ import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import dayjs from 'dayjs';
-import connectToDatabase from '../../lib/db';
 import ImageGallery from 'react-image-gallery';
 import React from 'react';
 import { TwitterTweetEmbed } from 'react-twitter-embed';
 import CryptoJS from 'crypto-js';
+import { getMessagesByDate } from '@/src/repositories/messages';
 
 // Assuming a simple message type, adjust according to your database schema
 type MessageType = {
@@ -47,35 +47,7 @@ interface Attachment {
 // Fetch data for each request
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const date = context.params?.date as string;
-
-    const db = await connectToDatabase();
-    const sql = `
-  SELECT
-    m.id,
-    m.sent_at,
-    m.type,
-    m.body,
-    m.json,
-    m.conversationId,
-    m.hasVisualMediaAttachments,
-    CASE
-      WHEN c.type = 'group' THEN c.name
-      ELSE NULL
-    END AS groupName,
-    COALESCE(pc.profileFullName, 'Unknown') AS senderName,
-    COALESCE(c.profileFullName, 'Unknown') AS destName
-  FROM
-    messages m
-  LEFT JOIN conversations c ON m.conversationId = c.id
-  LEFT JOIN conversations pc ON '+' || m.source = pc.e164
-  WHERE 
-    date(m.sent_at / 1000, 'unixepoch', 'localtime') = ?
-  ORDER BY
-    m.sent_at;
-`;
-
-    const stmt = db.prepare(sql);
-    const messages = stmt.all(date); // Assuming 'date' variable holds the desired date
+    const messages = await getMessagesByDate(date);
 
     return {
         props: {
