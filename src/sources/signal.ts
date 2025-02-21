@@ -45,9 +45,8 @@ export class SignalMessageSource implements TimelineSource {
             timestamp: msg.sent_at,
             kind: this.kind,
             content: {
-                direction: msg.type,
-                body: msg.body,
                 type: msg.type,
+                body: msg.body,
                 conversationId: msg.conversationId,
                 hasVisualMediaAttachments: msg.hasVisualMediaAttachments,
                 groupName: msg.groupName,

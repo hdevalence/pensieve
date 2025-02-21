@@ -34,7 +34,7 @@ interface SignalMessageCardProps {
 export function SignalMessageCard({ content, timestamp }: SignalMessageCardProps) {
     const [isOpen, setIsOpen] = useState(false);
     const date = new Date(timestamp);
-    const isOutbound = content.direction === 'outbound';
+    const isOutgoing = content.type === 'outgoing';
 
     const hasAttachments = Boolean(content.hasVisualMediaAttachments) && content.json?.attachments?.length > 0;
 
@@ -66,7 +66,7 @@ export function SignalMessageCard({ content, timestamp }: SignalMessageCardProps
             {/* Sender/Group Info - 2 columns */}
             <div className="col-span-2">
                 <div className="font-medium text-gray-100 text-sm truncate">
-                    {content.senderName}
+                    {isOutgoing ? content.destName : content.senderName}
                 </div>
                 {content.groupName && (
                     <div className="text-xs text-gray-400 truncate">
@@ -76,10 +76,10 @@ export function SignalMessageCard({ content, timestamp }: SignalMessageCardProps
             </div>
 
             {/* Message Content - 6 columns with 2 columns spacing */}
-            {isOutbound && <div className="col-span-2" />}
+            {isOutgoing && <div className="col-span-2" />}
             <div className="col-span-6">
-                <div className={`text-gray-200 p-3 rounded-lg ${isOutbound
-                    ? 'bg-indigo-900/50 ml-auto'
+                <div className={`text-gray-200 p-3 rounded-lg ${isOutgoing
+                    ? 'bg-indigo-900/50 ml-auto text-right'
                     : 'bg-gray-700/50'
                     }`}>
                     <div>{content.body}</div>
@@ -111,7 +111,7 @@ export function SignalMessageCard({ content, timestamp }: SignalMessageCardProps
                     />
                 )}
             </div>
-            {!isOutbound && <div className="col-span-2" />}
+            {!isOutgoing && <div className="col-span-2" />}
         </div>
     );
 } 

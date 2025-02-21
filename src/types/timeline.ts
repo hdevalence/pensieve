@@ -7,13 +7,12 @@ export interface TimelineItem<T = unknown> {
 
 export interface SignalMessageContent {
     body: string;
-    type: string;
+    type: 'incoming' | 'outgoing';
     conversationId: string;
     hasVisualMediaAttachments: boolean;
     groupName?: string;
     senderName: string;
     destName: string;
-    direction: 'inbound' | 'outbound';
     json: any;
 }
 
