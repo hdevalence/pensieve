@@ -17,6 +17,7 @@ interface Attachment {
         localKey: string;
         iv: string;
     };
+    size: number;
 }
 
 interface Slide {
@@ -47,7 +48,8 @@ export function SignalMessageCard({ content, timestamp }: SignalMessageCardProps
                 src: `/api/signal/attachments/${attachment.path}?` + new URLSearchParams({
                     contentType: attachment.contentType,
                     localKey: attachment.localKey,
-                    iv: attachment.iv
+                    iv: attachment.iv,
+                    size: attachment.size.toString()
                 }).toString(),
                 width: attachment.width,
                 height: attachment.height,

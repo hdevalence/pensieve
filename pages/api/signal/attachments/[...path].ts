@@ -18,8 +18,7 @@ export default async function handler(
     }
 
     try {
-        const { path: pathParts, localKey, iv } = req.query;
-        const contentType = req.query.contentType as string;
+        const { path: pathParts, localKey, iv, size, contentType } = req.query;
 
         if (!contentType) {
             return res.status(400).json({ error: 'contentType is required' });
@@ -30,18 +29,27 @@ export default async function handler(
         if (!iv || typeof iv !== 'string') {
             return res.status(400).json({ error: 'iv is required' });
         }
+        if (!size || typeof size !== 'string') {
+            return res.status(400).json({ error: 'size is required' });
+        }
         if (!pathParts || !Array.isArray(pathParts)) {
             return res.status(400).json({ error: 'Invalid path' });
         }
 
-        // Reconstruct the file path from the URL segments
         const filePath = pathParts.join('/');
-        console.log(`Serving attachment: ${filePath}`);
+        const sizeNum = parseInt(size, 10);
 
-        // Get the decrypted attachment data using the provided decryption parameters.
-        const data = await attachmentService.getAttachment(filePath, localKey, iv);
+        if (isNaN(sizeNum)) {
+            return res.status(400).json({ error: 'Invalid size parameter' });
+        }
 
-        // Set the correct content type and send the data.
+        const data = await attachmentService.getAttachment(
+            filePath,
+            localKey,
+            iv,
+            sizeNum
+        );
+
         res.setHeader('Content-Type', contentType);
         res.send(data);
     } catch (error) {

@@ -2,6 +2,11 @@ import path from 'path';
 import fs from 'fs/promises';
 import crypto from 'crypto';
 
+interface Keys {
+    aesKey: Buffer;
+    macKey: Buffer;
+}
+
 export class AttachmentService {
     private attachmentsPath: string;
 
@@ -14,6 +19,14 @@ export class AttachmentService {
         this.attachmentsPath = path.join(storagePath, 'attachments.noindex');
     }
 
+    private splitKeys(compositeKey: Buffer): Keys {
+        // Split the 64-byte key into two 32-byte keys
+        return {
+            aesKey: compositeKey.slice(0, 32),
+            macKey: compositeKey.slice(32, 64)
+        };
+    }
+
     /**
      * Reads and decrypts an attachment.
      *
@@ -21,9 +34,15 @@ export class AttachmentService {
      * @param localKey - The base64-encoded composite key (64 bytes) for the attachment.
      *                  Only the first 32 bytes are used for AES decryption.
      * @param iv - The base64-encoded initialization vector (16 bytes).
+     * @param size - The expected size of the decrypted file.
      * @returns The decrypted file as a Buffer.
      */
-    async getAttachment(filePath: string, localKey: string, iv: string): Promise<Buffer> {
+    async getAttachment(
+        filePath: string,
+        localKey: string,
+        iv: string,
+        size: number
+    ): Promise<Buffer> {
         const fullPath = path.join(this.attachmentsPath, filePath);
 
         console.log('Getting attachment:', filePath, localKey, iv, fullPath);
@@ -37,19 +56,38 @@ export class AttachmentService {
         const encryptedData = await fs.readFile(fullPath);
 
         // Convert the provided decryption parameters from base64.
-        const fullKeyBuffer = Buffer.from(localKey, 'base64');
-        // Use only the first 32 bytes (AES key) of the 64-byte composite key.
-        const keyBuffer = fullKeyBuffer.slice(0, 32);
+        const compositeKeyBuffer = Buffer.from(localKey, 'base64');
         const ivBuffer = Buffer.from(iv, 'base64');
 
-        // Create an AES-256-CBC decipher.
-        const decipher = crypto.createDecipheriv('aes-256-cbc', keyBuffer, ivBuffer);
-        decipher.setAutoPadding(true);
+        // Split into AES and MAC keys
+        const { aesKey, macKey } = this.splitKeys(compositeKeyBuffer);
 
-        // Decrypt the file.
-        const decryptedChunks = [decipher.update(encryptedData), decipher.final()];
-        const decryptedData = Buffer.concat(decryptedChunks);
+        // Create HMAC for verification
+        const hmac = crypto.createHmac('sha256', macKey);
+        hmac.update(encryptedData.slice(0, -32)); // Exclude the MAC at the end
 
-        return decryptedData;
+        // Get the stored MAC from the last 32 bytes
+        const storedMac = encryptedData.slice(-32);
+        const calculatedMac = hmac.digest();
+
+        // Verify MAC
+        if (!crypto.timingSafeEqual(calculatedMac, storedMac)) {
+            throw new Error('MAC verification failed');
+        }
+
+        // Create decipher
+        const decipher = crypto.createDecipheriv('aes-256-cbc', aesKey, ivBuffer);
+
+        // Decrypt (excluding MAC)
+        const decryptedData = Buffer.concat([
+            decipher.update(encryptedData.slice(0, -32)),
+            decipher.final()
+        ]);
+
+        console.log('Decrypted data:', decryptedData);
+
+
+        // Trim padding to match original size
+        return decryptedData.slice(0, size);
     }
 }
