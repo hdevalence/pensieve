@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Timeline } from '@/components/Timeline';
+import { Timeline } from '@/components/timeline/Timeline';
 
 const Home: React.FC = () => {
-    const [startDate, setStartDate] = useState<string>('');
+    const [startDate, setStartDate] = useState<string>('2025-02-12');
     const [itemCount, setItemCount] = useState<number>(50);
 
     const startTimestamp = startDate ? new Date(startDate + 'T23:59:59').getTime() : 0;

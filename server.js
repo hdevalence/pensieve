@@ -11,7 +11,7 @@ app.prepare().then(() => {
 
   const storagePath = process.env.STORAGE_PATH || '/you/didnt/set/STORAGE_PATH/env/var';
   // Serve files from a specific directory
-  server.use('/attachments', express.static(path.join(storagePath, '/attachments.noindex')));
+  server.use('/api/signal/attachments', express.static(path.join(storagePath, '/attachments.noindex')));
 
   server.all('*', (req, res) => {
     return handle(req, res);

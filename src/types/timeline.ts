@@ -3,9 +3,6 @@ export interface TimelineItem<T = unknown> {
     timestamp: number;  // Unix timestamp in milliseconds
     kind: string;      // e.g., 'signal_message', 'tweet', etc.
     content: T;
-    metadata: {
-        [key: string]: any;
-    };
 }
 
 export interface SignalMessageContent {
@@ -16,6 +13,8 @@ export interface SignalMessageContent {
     groupName?: string;
     senderName: string;
     destName: string;
+    direction: 'inbound' | 'outbound';
+    json: any;
 }
 
 export interface TimelineSource {

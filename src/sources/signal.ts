@@ -7,6 +7,8 @@ export class SignalMessageSource implements TimelineSource {
     async getItems(startTime: number, count: number): Promise<TimelineItem<SignalMessageContent>[]> {
         const db = await connectToDatabase();
 
+        console.log(startTime, count);
+
         const sql = `
             SELECT
                 m.id,
@@ -25,7 +27,7 @@ export class SignalMessageSource implements TimelineSource {
             FROM
                 messages m
             LEFT JOIN conversations c ON m.conversationId = c.id
-            LEFT JOIN conversations pc ON '+' || m.source = pc.e164
+            LEFT JOIN conversations pc ON m.sourceServiceId = pc.serviceId
             WHERE 
                 m.sent_at <= ?
             ORDER BY
@@ -36,11 +38,14 @@ export class SignalMessageSource implements TimelineSource {
         const stmt = db.prepare(sql);
         const messages = stmt.all(startTime, count);
 
+        console.log(messages.slice(0, 3));
+
         return messages.map(msg => ({
             id: msg.id,
             timestamp: msg.sent_at,
             kind: this.kind,
             content: {
+                direction: msg.type,
                 body: msg.body,
                 type: msg.type,
                 conversationId: msg.conversationId,
@@ -48,10 +53,8 @@ export class SignalMessageSource implements TimelineSource {
                 groupName: msg.groupName,
                 senderName: msg.senderName,
                 destName: msg.destName,
+                json: msg.json ? JSON.parse(msg.json) : null
             },
-            metadata: {
-                json: msg.json
-            }
         }));
     }
 } 

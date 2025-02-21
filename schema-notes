@@ -1,0 +1,294 @@
+sqlite> .schema messages
+CREATE TABLE messages(
+        rowid INTEGER PRIMARY KEY ASC,
+        id STRING UNIQUE,
+        json TEXT,
+        readStatus INTEGER,
+        expires_at INTEGER,
+        sent_at INTEGER,
+        schemaVersion INTEGER,
+        conversationId STRING,
+        received_at INTEGER,
+        hasAttachments INTEGER,
+        hasFileAttachments INTEGER,
+        hasVisualMediaAttachments INTEGER,
+        expireTimer INTEGER,
+        expirationStartTimestamp INTEGER,
+        type STRING,
+        body TEXT,
+        messageTimer INTEGER,
+        messageTimerStart INTEGER,
+        messageTimerExpiresAt INTEGER,
+        isErased INTEGER,
+        isViewOnce INTEGER,
+        sourceServiceId TEXT, serverGuid STRING NULL, sourceDevice INTEGER, storyId STRING, isStory INTEGER
+        GENERATED ALWAYS AS (type IS 'story'), isChangeCreatedByUs INTEGER NOT NULL DEFAULT 0, isTimerChangeFromSync INTEGER
+        GENERATED ALWAYS AS (
+          json_extract(json, '$.expirationTimerUpdate.fromSync') IS 1
+        ), seenStatus NUMBER default 0, storyDistributionListId STRING, expiresAt INT
+        GENERATED ALWAYS
+        AS (ifnull(
+          expirationStartTimestamp + (expireTimer * 1000),
+          9007199254740991
+        )), isUserInitiatedMessage INTEGER
+        GENERATED ALWAYS AS (
+          type IS NULL
+          OR
+          type NOT IN (
+            'change-number-notification',
+            'contact-removed-notification',
+            'conversation-merge',
+            'group-v1-migration',
+            'group-v2-change',
+            'keychange',
+            'message-history-unsynced',
+            'profile-change',
+            'story',
+            'universal-timer-notification',
+            'verified-change'
+          )
+        ), mentionsMe INTEGER NOT NULL DEFAULT 0, isGroupLeaveEvent INTEGER
+        GENERATED ALWAYS AS (
+          type IS 'group-v2-change' AND
+          json_array_length(json_extract(json, '$.groupV2Change.details')) IS 1 AND
+          json_extract(json, '$.groupV2Change.details[0].type') IS 'member-remove' AND
+          json_extract(json, '$.groupV2Change.from') IS NOT NULL AND
+          json_extract(json, '$.groupV2Change.from') IS json_extract(json, '$.groupV2Change.details[0].aci')
+        ), isGroupLeaveEventFromOther INTEGER
+        GENERATED ALWAYS AS (
+          isGroupLeaveEvent IS 1
+          AND
+          isChangeCreatedByUs IS 0
+        ), callId TEXT
+        GENERATED ALWAYS AS (
+          json_extract(json, '$.callId')
+        ), shouldAffectPreview INTEGER
+        GENERATED ALWAYS AS (
+      type IS NULL
+      OR
+      type NOT IN (
+        'change-number-notification',
+        'contact-removed-notification',
+        'conversation-merge',
+        'group-v1-migration',
+        'keychange',
+        'message-history-unsynced',
+        'profile-change',
+        'story',
+        'universal-timer-notification',
+        'verified-change'
+      )
+      AND NOT (
+        type IS 'message-request-response-event'
+        AND json_extract(json, '$.messageRequestResponseEvent') IN ('ACCEPT', 'BLOCK', 'UNBLOCK')
+      )
+    ), shouldAffectActivity INTEGER
+        GENERATED ALWAYS AS (
+      type IS NULL
+      OR
+      type NOT IN (
+        'change-number-notification',
+        'contact-removed-notification',
+        'conversation-merge',
+        'group-v1-migration',
+        'keychange',
+        'message-history-unsynced',
+        'profile-change',
+        'story',
+        'universal-timer-notification',
+        'verified-change'
+      )
+      AND NOT (
+        type IS 'message-request-response-event'
+        AND json_extract(json, '$.messageRequestResponseEvent') IN ('ACCEPT', 'BLOCK', 'UNBLOCK')
+      )
+    ), isAddressableMessage INTEGER
+        GENERATED ALWAYS AS (
+          type IS NULL
+          OR
+          type IN (
+            'incoming',
+            'outgoing'
+          )
+        ), timestamp INTEGER, received_at_ms INTEGER, unidentifiedDeliveryReceived INTEGER, serverTimestamp INTEGER, source TEXT);
+CREATE INDEX messages_id ON messages (id ASC);
+CREATE INDEX messages_receipt ON messages (sent_at);
+CREATE INDEX messages_schemaVersion ON messages (schemaVersion);
+CREATE INDEX messages_view_once ON messages
+        (isErased) WHERE isViewOnce = 1;
+CREATE INDEX messages_searchOrder on messages(received_at, sent_at);
+CREATE INDEX messages_unexpectedly_missing_expiration_start_timestamp ON messages (
+        expireTimer, expirationStartTimestamp, type
+      )
+      WHERE expireTimer IS NOT NULL AND expirationStartTimestamp IS NULL;
+CREATE INDEX messages_hasAttachments
+        ON messages (conversationId, hasAttachments, received_at)
+        WHERE type IS NOT 'story' AND storyId IS NULL;
+CREATE INDEX messages_hasFileAttachments
+        ON messages (conversationId, hasFileAttachments, received_at)
+        WHERE type IS NOT 'story' AND storyId IS NULL;
+CREATE INDEX messages_conversation ON messages
+        (conversationId, isStory, storyId, received_at, sent_at);
+CREATE INDEX messages_unread ON messages
+        (conversationId, readStatus, isStory, storyId, received_at, sent_at) WHERE readStatus IS NOT NULL;
+CREATE INDEX messages_conversation_no_story_id ON messages
+        (conversationId, isStory, received_at, sent_at);
+CREATE INDEX messages_unread_no_story_id ON messages
+        (conversationId, readStatus, isStory, received_at, sent_at)
+        WHERE readStatus IS NOT NULL;
+CREATE INDEX messages_unseen_no_story ON messages
+        (conversationId, seenStatus, isStory, received_at, sent_at)
+        WHERE
+          seenStatus IS NOT NULL;
+CREATE INDEX messages_unseen_with_story ON messages
+        (conversationId, seenStatus, isStory, storyId, received_at, sent_at)
+        WHERE
+          seenStatus IS NOT NULL;
+CREATE INDEX expiring_message_by_conversation_and_received_at
+        ON messages
+        (
+          conversationId,
+          storyId,
+          expirationStartTimestamp,
+          expireTimer,
+          received_at
+        )
+        WHERE isStory IS 0 AND type IS 'incoming';
+CREATE INDEX messages_by_distribution_list
+        ON messages(storyDistributionListId, received_at)
+        WHERE storyDistributionListId IS NOT NULL;
+CREATE INDEX messages_by_storyId ON messages (storyId);
+CREATE INDEX messages_expires_at ON messages (
+        expiresAt
+      );
+CREATE INDEX messages_hasVisualMediaAttachments
+        ON messages (
+          conversationId, isStory, storyId,
+          hasVisualMediaAttachments, received_at, sent_at
+        )
+        WHERE hasVisualMediaAttachments IS 1;
+CREATE INDEX messages_unread_mentions ON messages
+        (conversationId, readStatus, mentionsMe, isStory, storyId, received_at, sent_at)
+        WHERE readStatus IS NOT NULL;
+CREATE INDEX messages_unread_mentions_no_story_id ON messages
+        (conversationId, readStatus, mentionsMe, isStory, received_at, sent_at)
+        WHERE isStory IS 0 AND readStatus IS NOT NULL;
+CREATE INDEX messages_story_replies
+        ON messages (storyId, received_at, sent_at)
+        WHERE isStory IS 0;
+CREATE INDEX messages_sourceServiceId on messages(sourceServiceId);
+CREATE TRIGGER messages_on_view_once_update AFTER UPDATE ON messages
+      WHEN
+        new.body IS NOT NULL AND new.isViewOnce = 1
+      BEGIN
+        DELETE FROM messages_fts WHERE rowid = old.rowid;
+      END;
+CREATE TRIGGER messages_on_insert AFTER INSERT ON messages
+      WHEN new.isViewOnce IS NOT 1 AND new.storyId IS NULL
+      BEGIN
+        INSERT INTO messages_fts
+          (rowid, body)
+        VALUES
+          (new.rowid, new.body);
+      END;
+CREATE TRIGGER messages_on_delete AFTER DELETE ON messages BEGIN
+        DELETE FROM messages_fts WHERE rowid = old.rowid;
+        DELETE FROM sendLogPayloads WHERE id IN (
+          SELECT payloadId FROM sendLogMessageIds
+          WHERE messageId = old.id
+        );
+        DELETE FROM reactions WHERE rowid IN (
+          SELECT rowid FROM reactions
+          WHERE messageId = old.id
+        );
+        DELETE FROM storyReads WHERE storyId = old.storyId;
+      END;
+CREATE TRIGGER messages_on_update AFTER UPDATE ON messages
+      WHEN
+        (new.body IS NULL OR old.body IS NOT new.body) AND
+         new.isViewOnce IS NOT 1 AND new.storyId IS NULL
+      BEGIN
+        DELETE FROM messages_fts WHERE rowid = old.rowid;
+        INSERT INTO messages_fts
+          (rowid, body)
+        VALUES
+          (new.rowid, new.body);
+      END;
+CREATE TRIGGER messages_on_insert_insert_mentions AFTER INSERT ON messages
+      BEGIN
+        INSERT INTO mentions (messageId, mentionAci, start, length)
+
+    SELECT messages.id, bodyRanges.value ->> 'mentionAci' as mentionAci,
+      bodyRanges.value ->> 'start' as start,
+      bodyRanges.value ->> 'length' as length
+    FROM messages, json_each(messages.json ->> 'bodyRanges') as bodyRanges
+    WHERE bodyRanges.value ->> 'mentionAci' IS NOT NULL
+
+        AND messages.id = new.id;
+      END;
+CREATE TRIGGER messages_on_update_update_mentions AFTER UPDATE ON messages
+      BEGIN
+        DELETE FROM mentions WHERE messageId = new.id;
+        INSERT INTO mentions (messageId, mentionAci, start, length)
+
+    SELECT messages.id, bodyRanges.value ->> 'mentionAci' as mentionAci,
+      bodyRanges.value ->> 'start' as start,
+      bodyRanges.value ->> 'length' as length
+    FROM messages, json_each(messages.json ->> 'bodyRanges') as bodyRanges
+    WHERE bodyRanges.value ->> 'mentionAci' IS NOT NULL
+
+        AND messages.id = new.id;
+      END;
+CREATE INDEX messages_preview ON messages
+        (conversationId, shouldAffectPreview, isGroupLeaveEventFromOther,
+         received_at, sent_at);
+CREATE INDEX messages_preview_without_story ON messages
+        (conversationId, shouldAffectPreview, isGroupLeaveEventFromOther,
+         received_at, sent_at) WHERE storyId IS NULL;
+CREATE INDEX messages_activity ON messages
+        (conversationId, shouldAffectActivity, isTimerChangeFromSync,
+         isGroupLeaveEventFromOther, received_at, sent_at);
+CREATE INDEX message_user_initiated ON messages (conversationId, isUserInitiatedMessage);
+CREATE INDEX messages_by_date_addressable
+        ON messages (
+          conversationId, isAddressableMessage, received_at, sent_at
+      );
+CREATE INDEX messages_by_date_addressable_nondisappearing
+        ON messages (
+          conversationId, isAddressableMessage, received_at, sent_at
+      ) WHERE expireTimer IS NULL;
+CREATE INDEX messages_callHistory_seenStatus
+        ON messages (type, seenStatus)
+        WHERE type IS 'call-history';
+CREATE INDEX messages_call ON messages
+        (type, conversationId, callId, sent_at)
+        WHERE type IS 'call-history';
+CREATE INDEX messages_callHistory_markReadByConversationBefore
+        ON messages (type, conversationId, seenStatus, sent_at DESC)
+        WHERE type IS 'call-history';
+CREATE INDEX messages_isStory
+        ON messages(received_at, sent_at)
+        WHERE isStory = 1;
+CREATE INDEX messages_callHistory_markReadBefore
+        ON messages (type, seenStatus, received_at DESC)
+        WHERE type IS 'call-history';
+sqlite> .schema conversations
+CREATE TABLE conversations(
+      id STRING PRIMARY KEY ASC,
+      json TEXT,
+
+      active_at INTEGER,
+      type STRING,
+      members TEXT,
+      name TEXT,
+      profileName TEXT
+    , profileFamilyName TEXT, profileFullName TEXT, e164 TEXT, serviceId TEXT, groupId TEXT, profileLastFetchedAt INTEGER, expireTimerVersion INTEGER NOT NULL DEFAULT 1);
+CREATE INDEX conversations_active ON conversations (
+      active_at
+    ) WHERE active_at IS NOT NULL;
+CREATE INDEX conversations_type ON conversations (
+      type
+    ) WHERE type IS NOT NULL;
+CREATE INDEX conversations_e164 ON conversations(e164);
+CREATE INDEX conversations_groupId ON conversations(groupId);
+CREATE INDEX conversations_serviceId ON conversations(serviceId);

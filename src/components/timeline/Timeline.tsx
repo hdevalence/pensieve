@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { TimelineItem, SignalMessageContent } from '../types/timeline';
+import { TimelineItem } from '../../types/timeline';
+import { TimelineItemCard } from './TimelineItemCard';
 import Editor from '@monaco-editor/react';
 
 interface TimelineProps {
@@ -47,7 +48,7 @@ export function Timeline({ startTime, itemCount = 50 }: TimelineProps) {
 
             <div className="border border-gray-700 rounded-lg overflow-hidden">
                 <Editor
-                    height="400px"
+                    height="900px"
                     defaultLanguage="json"
                     value={JSON.stringify(items, null, 2)}
                     options={{
@@ -61,47 +62,6 @@ export function Timeline({ startTime, itemCount = 50 }: TimelineProps) {
                     }}
                 />
             </div>
-        </div>
-    );
-}
-
-function TimelineItemCard({ item }: { item: TimelineItem }) {
-    const date = new Date(item.timestamp);
-
-    const renderContent = () => {
-        switch (item.kind) {
-            case 'signal_message': {
-                const content = item.content as SignalMessageContent;
-                return (
-                    <div className="space-y-2">
-                        <div className="flex justify-between">
-                            <span className="font-medium text-gray-100">{content.senderName}</span>
-                            <span className="text-gray-400">
-                                {date.toLocaleTimeString()}
-                            </span>
-                        </div>
-                        {content.groupName && (
-                            <div className="text-sm text-gray-400">
-                                in {content.groupName}
-                            </div>
-                        )}
-                        <div className="text-gray-200">{content.body}</div>
-                        {content.hasVisualMediaAttachments && (
-                            <div className="text-sm text-indigo-400">
-                                [Has media attachments]
-                            </div>
-                        )}
-                    </div>
-                );
-            }
-            default:
-                return <div className="text-gray-400">Unknown item type: {item.kind}</div>;
-        }
-    };
-
-    return (
-        <div className="rounded-lg border border-gray-700 bg-gray-800 p-4 shadow-sm hover:shadow-md transition-shadow">
-            {renderContent()}
         </div>
     );
 } 

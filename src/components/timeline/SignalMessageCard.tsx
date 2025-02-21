@@ -1,0 +1,107 @@
+import { SignalMessageContent } from '../../types/timeline';
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
+import { useState } from 'react';
+
+interface Attachment {
+    contentType: string;
+    width: number;
+    height: number;
+    path: string;
+    thumbnail?: {
+        path: string;
+        width: number;
+        height: number;
+    };
+}
+
+interface Slide {
+    src: string;
+    width: number;
+    height: number;
+    thumbnailSrc?: string;
+}
+
+interface SignalMessageCardProps {
+    content: SignalMessageContent;
+    timestamp: number;
+}
+
+export function SignalMessageCard({ content, timestamp }: SignalMessageCardProps) {
+    const [isOpen, setIsOpen] = useState(false);
+    const date = new Date(timestamp);
+    const isOutbound = content.direction === 'outbound';
+
+    const hasAttachments = Boolean(content.hasVisualMediaAttachments) && content.json?.attachments?.length > 0;
+
+    // Convert attachments to the format expected by the lightbox
+    const slides = hasAttachments
+        ? content.json.attachments.map((attachment: Attachment): Slide => ({
+            src: `/api/signal/attachments/${attachment.path}`,
+            width: attachment.width,
+            height: attachment.height,
+            thumbnailSrc: attachment.thumbnail
+                ? `/api/signal/attachments/${attachment.thumbnail.path}`
+                : undefined,
+        }))
+        : [];
+
+    return (
+        <div className="grid grid-cols-12 gap-4 items-start">
+            {/* Timestamp - 2 columns */}
+            <div className="col-span-2 text-sm text-gray-400">
+                {date.toLocaleTimeString()}
+            </div>
+
+            {/* Sender/Group Info - 2 columns */}
+            <div className="col-span-2">
+                <div className="font-medium text-gray-100 text-sm truncate">
+                    {content.senderName}
+                </div>
+                {content.groupName && (
+                    <div className="text-xs text-gray-400 truncate">
+                        {content.groupName}
+                    </div>
+                )}
+            </div>
+
+            {/* Message Content - 6 columns with 2 columns spacing */}
+            {isOutbound && <div className="col-span-2" />}
+            <div className="col-span-6">
+                <div className={`text-gray-200 p-3 rounded-lg ${isOutbound
+                    ? 'bg-indigo-900/50 ml-auto'
+                    : 'bg-gray-700/50'
+                    }`}>
+                    <div>{content.body}</div>
+
+                    {hasAttachments && (
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                            {slides.map((slide: Slide, index: number) => (
+                                <div
+                                    key={index}
+                                    className="cursor-pointer overflow-hidden rounded-lg"
+                                    onClick={() => setIsOpen(true)}
+                                >
+                                    <img
+                                        src={slide.thumbnailSrc || slide.src}
+                                        alt=""
+                                        className="w-full h-auto object-cover"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {hasAttachments && (
+                    <Lightbox
+                        open={isOpen}
+                        close={() => setIsOpen(false)}
+                        slides={slides}
+                    />
+                )}
+            </div>
+            {!isOutbound && <div className="col-span-2" />}
+        </div>
+    );
+} 
