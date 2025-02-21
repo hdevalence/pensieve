@@ -5,6 +5,8 @@ make a copy, so that there is no possibility of corrupting your Signal data.
 Quit Signal first, so that nothing is writing to the data while you are copying
 it.
 
+Signal "upgraded" data storage to use the platform keychain. On MacOS, use Keychain Access to access the "Signal Safe Storage" keychain entry.
+
 The location of that data is platform dependent. On MacOS, for instance, you
 could do
 ```
@@ -13,6 +15,7 @@ cp -a ~/Library/Application\ Support/Signal/ ~/data/signal/2023-11-23/
 Adjust file paths as appropriate.  Next, set the STORAGE_PATH in `.env.local`:
 ```
 STORAGE_PATH=~/data/signal/2023-11-23
+KEYCHAIN_PASSWORD=THE_VALUE_FROM_KEYCHAIN_ACCESS
 ```
 Then you are ready to follow the instructions below.
 
