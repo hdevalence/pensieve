@@ -26,9 +26,6 @@ export default async function handler(
         if (!localKey || typeof localKey !== 'string') {
             return res.status(400).json({ error: 'localKey is required' });
         }
-        if (!iv || typeof iv !== 'string') {
-            return res.status(400).json({ error: 'iv is required' });
-        }
         if (!size || typeof size !== 'string') {
             return res.status(400).json({ error: 'size is required' });
         }
@@ -46,7 +43,6 @@ export default async function handler(
         const data = await attachmentService.getAttachment(
             filePath,
             localKey,
-            iv,
             sizeNum
         );
 
