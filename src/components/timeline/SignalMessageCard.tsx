@@ -8,10 +8,14 @@ interface Attachment {
     width: number;
     height: number;
     path: string;
+    localKey: string;
+    iv: string;
     thumbnail?: {
         path: string;
         width: number;
         height: number;
+        localKey: string;
+        iv: string;
     };
 }
 
@@ -19,7 +23,6 @@ interface Slide {
     src: string;
     width: number;
     height: number;
-    thumbnailSrc?: string;
 }
 
 interface SignalMessageCardProps {
@@ -34,16 +37,22 @@ export function SignalMessageCard({ content, timestamp }: SignalMessageCardProps
 
     const hasAttachments = Boolean(content.hasVisualMediaAttachments) && content.json?.attachments?.length > 0;
 
+    console.log(content.json?.attachments);
+
     // Convert attachments to the format expected by the lightbox
     const slides = hasAttachments
-        ? content.json.attachments.map((attachment: Attachment): Slide => ({
-            src: `/api/signal/attachments/${attachment.path}`,
-            width: attachment.width,
-            height: attachment.height,
-            thumbnailSrc: attachment.thumbnail
-                ? `/api/signal/attachments/${attachment.thumbnail.path}`
-                : undefined,
-        }))
+        ? content.json.attachments.map((attachment: Attachment): Slide => {
+            console.log('Processing attachment:', attachment);
+            return {
+                src: `/api/signal/attachments/${attachment.path}?` + new URLSearchParams({
+                    contentType: attachment.contentType,
+                    localKey: attachment.localKey,
+                    iv: attachment.iv
+                }).toString(),
+                width: attachment.width,
+                height: attachment.height,
+            };
+        })
         : [];
 
     return (
@@ -83,7 +92,7 @@ export function SignalMessageCard({ content, timestamp }: SignalMessageCardProps
                                     onClick={() => setIsOpen(true)}
                                 >
                                     <img
-                                        src={slide.thumbnailSrc || slide.src}
+                                        src={slide.src}
                                         alt=""
                                         className="w-full h-auto object-cover"
                                     />
