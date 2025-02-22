@@ -13,19 +13,34 @@ export class TimelineService {
         this.sources.push(source);
     }
 
-    async getTimelineItems(startTime: number, count: number): Promise<TimelineItem[]> {
-        // Request count items from each source to ensure we have enough after merging
-        const itemPromises = this.sources.map(source =>
-            source.getItems(startTime, count)
+    async getTimelineItems(centerTime: number, count: number): Promise<TimelineItem[]> {
+        // Calculate how many items to request in each direction
+        const prevCount = Math.floor(count / 2);
+        const nextCount = count - prevCount;
+
+        // Request items from each source
+        const prevPromises = this.sources.map(source =>
+            source.getPrevItems(centerTime, prevCount)
+        );
+        const nextPromises = this.sources.map(source =>
+            source.getNextItems(centerTime, nextCount)
         );
 
         // Wait for all sources to return items
-        const itemArrays = await Promise.all(itemPromises);
+        const [prevArrays, nextArrays] = await Promise.all([
+            Promise.all(prevPromises),
+            Promise.all(nextPromises)
+        ]);
 
-        // Merge all items and sort by timestamp (oldest first)
-        const allItems = itemArrays.flat().sort((a, b) => a.timestamp - b.timestamp);
+        // Merge all items from each direction and sort by timestamp (oldest first)
+        const allPrevItems = prevArrays.flat().sort((a, b) => a.timestamp - b.timestamp);
+        const allNextItems = nextArrays.flat().sort((a, b) => a.timestamp - b.timestamp);
 
-        // Return only the requested number of items
-        return allItems.slice(0, count);
+        // Take the last prevCount items from prev and first nextCount items from next
+        const prevItems = allPrevItems.slice(-prevCount);
+        const nextItems = allNextItems.slice(0, nextCount);
+
+        // Combine the results
+        return [...prevItems, ...nextItems];
     }
 } 

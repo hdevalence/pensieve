@@ -82,7 +82,7 @@ export function Timeline({ startTime, itemCount = 50 }: TimelineProps) {
 
     return (
         <div className="space-y-8 p-4">
-            <div className="">
+            <div className="space-y-4">
                 {threadGroups.map((group) => (
                     <TimelineItemCard
                         key={group.threadId}

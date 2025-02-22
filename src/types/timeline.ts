@@ -20,8 +20,14 @@ export interface SignalMessageContent {
 export interface TimelineSource {
     kind: string;
     /**
-     * Get items from this source, starting from startTime and returning at most count items,
-     * ordered by timestamp (newest first)
+     * Get items from this source that occur after startTime, returning at most count items,
+     * ordered by timestamp (oldest first)
      */
-    getItems(startTime: number, count: number): Promise<TimelineItem[]>;
+    getNextItems(startTime: number, count: number): Promise<TimelineItem[]>;
+
+    /**
+     * Get items from this source that occur before startTime, returning at most count items,
+     * ordered by timestamp (oldest first)
+     */
+    getPrevItems(startTime: number, count: number): Promise<TimelineItem[]>;
 } 

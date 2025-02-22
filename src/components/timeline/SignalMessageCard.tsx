@@ -71,7 +71,7 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
                     <div key={index} className="grid grid-cols-12 items-start">
                         {/* Timestamp - 2 columns */}
                         <div className="col-span-2 text-sm text-gray-400">
-                            {date.toLocaleTimeString()}
+                            {date.toLocaleString()}
                         </div>
 
                         {/* Sender Info - 2 columns */}
@@ -91,22 +91,24 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
 
                         {/* Message Content - 6 columns with 2 columns spacing */}
                         {isOutgoing && <div className="col-span-2" />}
-                        <div className={`col-span-6 text-gray-200 px-2 ${isOutgoing ? 'text-right' : ''}`}>
+                        <div
+                            className={`col-span-6 text-gray-200 px-2 ${isOutgoing ? 'text-right' : ''
+                                }`}
+                        >
                             <div>{content.body}</div>
                             {hasAttachments && (
-                                <div className="mt-2 grid grid-cols-3 gap-2">
+                                <div
+                                    className={`mt-2 flex flex-wrap gap-2 ${isOutgoing ? 'justify-end' : ''
+                                        }`}
+                                >
                                     {slides.map((slide: Slide, slideIndex: number) => (
-                                        <div
+                                        <img
                                             key={slideIndex}
-                                            className="cursor-pointer overflow-hidden rounded-lg"
+                                            src={slide.src}
+                                            alt=""
                                             onClick={() => setOpenLightboxIndex(index)}
-                                        >
-                                            <img
-                                                src={slide.src}
-                                                alt=""
-                                                className="w-full h-auto max-h-72 object-cover"
-                                            />
-                                        </div>
+                                            className="max-w-72 max-h-72 h-auto object-cover rounded-lg cursor-pointer"
+                                        />
                                     ))}
                                 </div>
                             )}
