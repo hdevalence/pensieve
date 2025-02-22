@@ -91,32 +91,25 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
 
                         {/* Message Content - 6 columns with 2 columns spacing */}
                         {isOutgoing && <div className="col-span-2" />}
-                        <div className="col-span-6">
-                            <div className={`text-gray-200 px-2 ${isOutgoing
-                                ? 'ml-auto text-right'
-                                : ''
-                                }`}>
-                                <div>{content.body}</div>
-
-                                {hasAttachments && (
-                                    <div className="mt-2 grid grid-cols-2 gap-2">
-                                        {slides.map((slide: Slide, slideIndex: number) => (
-                                            <div
-                                                key={slideIndex}
-                                                className="cursor-pointer overflow-hidden rounded-lg"
-                                                onClick={() => setOpenLightboxIndex(index)}
-                                            >
-                                                <img
-                                                    src={slide.src}
-                                                    alt=""
-                                                    className="w-full h-auto max-h-72 object-cover"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
+                        <div className={`col-span-6 text-gray-200 px-2 ${isOutgoing ? 'text-right' : ''}`}>
+                            <div>{content.body}</div>
+                            {hasAttachments && (
+                                <div className="mt-2 grid grid-cols-3 gap-2">
+                                    {slides.map((slide: Slide, slideIndex: number) => (
+                                        <div
+                                            key={slideIndex}
+                                            className="cursor-pointer overflow-hidden rounded-lg"
+                                            onClick={() => setOpenLightboxIndex(index)}
+                                        >
+                                            <img
+                                                src={slide.src}
+                                                alt=""
+                                                className="w-full h-auto max-h-72 object-cover"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                             {hasAttachments && openLightboxIndex === index && (
                                 <Lightbox
                                     open={true}
