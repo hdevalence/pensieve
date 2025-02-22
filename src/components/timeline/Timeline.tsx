@@ -8,6 +8,32 @@ interface TimelineProps {
     itemCount?: number;
 }
 
+type ThreadGroup = {
+    threadId: string;
+    items: TimelineItem[];
+};
+
+function groupItemsByThread(items: TimelineItem[]): ThreadGroup[] {
+    const groups: ThreadGroup[] = [];
+    let currentGroup: ThreadGroup | null = null;
+
+    for (const item of items) {
+        if (!currentGroup || currentGroup.threadId !== item.threadId) {
+            // Start a new group
+            currentGroup = {
+                threadId: item.threadId,
+                items: [item]
+            };
+            groups.push(currentGroup);
+        } else {
+            // Add to existing group
+            currentGroup.items.push(item);
+        }
+    }
+
+    return groups;
+}
+
 export function Timeline({ startTime, itemCount = 50 }: TimelineProps) {
     const [items, setItems] = useState<TimelineItem[]>([]);
     const [loading, setLoading] = useState(true);
@@ -38,11 +64,13 @@ export function Timeline({ startTime, itemCount = 50 }: TimelineProps) {
     if (loading) return <div className="p-4 text-gray-300">Loading timeline...</div>;
     if (error) return <div className="p-4 text-red-400">Error: {error}</div>;
 
+    const threadGroups = groupItemsByThread(items);
+
     return (
         <div className="space-y-8 p-4">
             <div className="space-y-4">
-                {items.map((item) => (
-                    <TimelineItemCard key={item.id} item={item} />
+                {threadGroups.map((group) => (
+                    <TimelineItemCard key={group.threadId} items={group.items} />
                 ))}
             </div>
 

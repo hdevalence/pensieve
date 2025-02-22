@@ -3,6 +3,7 @@ export interface TimelineItem<T = unknown> {
     timestamp: number;  // Unix timestamp in milliseconds
     kind: string;      // e.g., 'signal_message', 'tweet', etc.
     content: T;
+    threadId: string;  // Identifier for grouping related items together
 }
 
 export interface SignalMessageContent {

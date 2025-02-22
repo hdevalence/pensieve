@@ -44,6 +44,7 @@ export class SignalMessageSource implements TimelineSource {
             id: msg.id,
             timestamp: msg.sent_at,
             kind: this.kind,
+            threadId: `signal-${msg.conversationId}`,
             content: {
                 type: msg.type,
                 body: msg.body,

@@ -26,92 +26,105 @@ interface Slide {
     height: number;
 }
 
-interface SignalMessageCardProps {
+interface MessageItem {
     content: SignalMessageContent;
     timestamp: number;
 }
 
-export function SignalMessageCard({ content, timestamp }: SignalMessageCardProps) {
-    const [isOpen, setIsOpen] = useState(false);
-    const date = new Date(timestamp);
-    const isOutgoing = content.type === 'outgoing';
+interface SignalMessageCardProps {
+    items: MessageItem[];
+}
 
-    const hasAttachments = Boolean(content.hasVisualMediaAttachments) && content.json?.attachments?.length > 0;
+export function SignalMessageCard({ items }: SignalMessageCardProps) {
+    const [openLightboxIndex, setOpenLightboxIndex] = useState<number | null>(null);
 
-    console.log(content.json?.attachments);
-
-    // Convert attachments to the format expected by the lightbox
-    const slides = hasAttachments
-        ? content.json.attachments.map((attachment: Attachment): Slide => {
-            console.log('Processing attachment:', attachment);
-            return {
-                src: `/api/signal/attachments/${attachment.path}?` + new URLSearchParams({
-                    contentType: attachment.contentType,
-                    localKey: attachment.localKey,
-                    size: attachment.size.toString()
-                }).toString(),
-                width: attachment.width,
-                height: attachment.height,
-            };
-        })
-        : [];
+    // All messages in a thread should have the same conversation details
+    const firstItem = items[0];
+    const { groupName } = firstItem.content;
 
     return (
-        <div className="grid grid-cols-12 gap-4 items-start">
-            {/* Timestamp - 2 columns */}
-            <div className="col-span-2 text-sm text-gray-400">
-                {date.toLocaleTimeString()}
-            </div>
-
-            {/* Sender/Group Info - 2 columns */}
-            <div className="col-span-2">
-                <div className="font-medium text-gray-100 text-sm truncate">
-                    {isOutgoing ? content.destName : content.senderName}
+        <div className="space-y-2">
+            {/* Thread header with group name if present */}
+            {groupName && (
+                <div className="text-sm font-medium text-gray-300 px-2">
+                    {groupName}
                 </div>
-                {content.groupName && (
-                    <div className="text-xs text-gray-400 truncate">
-                        {content.groupName}
-                    </div>
-                )}
-            </div>
+            )}
 
-            {/* Message Content - 6 columns with 2 columns spacing */}
-            {isOutgoing && <div className="col-span-2" />}
-            <div className="col-span-6">
-                <div className={`text-gray-200 p-3 rounded-lg ${isOutgoing
-                    ? 'bg-indigo-900/50 ml-auto text-right'
-                    : 'bg-gray-700/50'
-                    }`}>
-                    <div>{content.body}</div>
+            {/* Messages */}
+            {items.map((item, index) => {
+                const { content, timestamp } = item;
+                const date = new Date(timestamp);
+                const isOutgoing = content.type === 'outgoing';
+                const hasAttachments = Boolean(content.hasVisualMediaAttachments) && content.json?.attachments?.length > 0;
 
-                    {hasAttachments && (
-                        <div className="mt-2 grid grid-cols-2 gap-2">
-                            {slides.map((slide: Slide, index: number) => (
-                                <div
-                                    key={index}
-                                    className="cursor-pointer overflow-hidden rounded-lg"
-                                    onClick={() => setIsOpen(true)}
-                                >
-                                    <img
-                                        src={slide.src}
-                                        alt=""
-                                        className="w-full h-auto object-cover"
-                                    />
-                                </div>
-                            ))}
+                // Convert attachments to slides if present
+                const slides = hasAttachments
+                    ? content.json.attachments.map((attachment: Attachment): Slide => ({
+                        src: `/api/signal/attachments/${attachment.path}?` + new URLSearchParams({
+                            contentType: attachment.contentType,
+                            localKey: attachment.localKey,
+                            size: attachment.size.toString()
+                        }).toString(),
+                        width: attachment.width,
+                        height: attachment.height,
+                    }))
+                    : [];
+
+                return (
+                    <div key={index} className="grid grid-cols-12 items-start">
+                        {/* Timestamp - 2 columns */}
+                        <div className="col-span-2 text-sm text-gray-400">
+                            {date.toLocaleTimeString()}
                         </div>
-                    )}
-                </div>
 
-                {hasAttachments && (
-                    <Lightbox
-                        open={isOpen}
-                        close={() => setIsOpen(false)}
-                        slides={slides}
-                    />
-                )}
-            </div>
-            {!isOutgoing && <div className="col-span-2" />}
+                        {/* Sender Info - 2 columns */}
+                        <div className="col-span-2">
+                            <div className="font-medium text-gray-100 text-sm truncate">
+                                {isOutgoing ? content.destName : content.senderName}
+                            </div>
+                        </div>
+
+                        {/* Message Content - 6 columns with 2 columns spacing */}
+                        {isOutgoing && <div className="col-span-2" />}
+                        <div className="col-span-6">
+                            <div className={`text-gray-200 p-3 rounded-lg ${isOutgoing
+                                ? 'bg-indigo-900/50 ml-auto text-right'
+                                : 'bg-gray-700/50'
+                                }`}>
+                                <div>{content.body}</div>
+
+                                {hasAttachments && (
+                                    <div className="mt-2 grid grid-cols-2 gap-2">
+                                        {slides.map((slide: Slide, slideIndex: number) => (
+                                            <div
+                                                key={slideIndex}
+                                                className="cursor-pointer overflow-hidden rounded-lg"
+                                                onClick={() => setOpenLightboxIndex(index)}
+                                            >
+                                                <img
+                                                    src={slide.src}
+                                                    alt=""
+                                                    className="w-full h-auto object-cover"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {hasAttachments && openLightboxIndex === index && (
+                                <Lightbox
+                                    open={true}
+                                    close={() => setOpenLightboxIndex(null)}
+                                    slides={slides}
+                                />
+                            )}
+                        </div>
+                        {!isOutgoing && <div className="col-span-2" />}
+                    </div>
+                );
+            })}
         </div>
     );
 } 
