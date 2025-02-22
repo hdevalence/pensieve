@@ -29,16 +29,21 @@ export class SignalMessageSource implements TimelineSource {
             LEFT JOIN conversations c ON m.conversationId = c.id
             LEFT JOIN conversations pc ON m.sourceServiceId = pc.serviceId
             WHERE 
-                m.sent_at <= ?
+                m.sent_at >= ?
             ORDER BY
-                m.sent_at DESC
+                m.sent_at ASC
             LIMIT ?;
         `;
 
         const stmt = db.prepare(sql);
         const messages = stmt.all(startTime, count);
 
-        console.log(messages.slice(0, 3));
+        // Debug logging for timestamps
+        console.log('Query parameters:', { startTime, count });
+        console.log('Message timestamps in order:');
+        messages.slice(0, 10).forEach((msg, i) => {
+            console.log(`${i}: ${new Date(msg.sent_at).toISOString()} (${msg.sent_at})`);
+        });
 
         return messages.map(msg => ({
             id: msg.id,

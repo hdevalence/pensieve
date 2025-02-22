@@ -40,16 +40,25 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
 
     // All messages in a thread should have the same conversation details
     const firstItem = items[0];
-    const { groupName } = firstItem.content;
+    const { groupName, type: firstMessageType } = firstItem.content;
+
+    // Determine the header name based on whether it's a group or direct message
+    const headerName = groupName || (firstMessageType === 'outgoing'
+        ? firstItem.content.destName
+        : firstItem.content.senderName);
 
     return (
-        <div className="space-y-2">
-            {/* Thread header with group name if present */}
-            {groupName && (
-                <div className="text-sm font-medium text-gray-300 px-2">
-                    {groupName}
+        <div className="">
+            {/* Thread header - always present */}
+            <div className="grid grid-cols-12 items-start">
+                <div className="col-span-2" />
+                <div className="col-span-2">
+                    <div className="font-medium text-gray-300 text-sm">
+                        {groupName ? <i>{headerName}</i> : headerName}
+                    </div>
                 </div>
-            )}
+                <div className="col-span-8" />
+            </div>
 
             {/* Messages */}
             {items.map((item, index) => {
@@ -57,6 +66,9 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
                 const date = new Date(timestamp);
                 const isOutgoing = content.type === 'outgoing';
                 const hasAttachments = Boolean(content.hasVisualMediaAttachments) && content.json?.attachments?.length > 0;
+
+                // Determine whether to show the sender name
+                const showSenderName = groupName ? !isOutgoing : false;
 
                 // Convert attachments to slides if present
                 const slides = hasAttachments
@@ -80,17 +92,19 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
 
                         {/* Sender Info - 2 columns */}
                         <div className="col-span-2">
-                            <div className="font-medium text-gray-100 text-sm truncate">
-                                {isOutgoing ? content.destName : content.senderName}
-                            </div>
+                            {showSenderName && (
+                                <div className="font-medium text-gray-100 text-sm truncate">
+                                    {content.senderName}
+                                </div>
+                            )}
                         </div>
 
                         {/* Message Content - 6 columns with 2 columns spacing */}
                         {isOutgoing && <div className="col-span-2" />}
                         <div className="col-span-6">
-                            <div className={`text-gray-200 p-3 rounded-lg ${isOutgoing
-                                ? 'bg-indigo-900/50 ml-auto text-right'
-                                : 'bg-gray-700/50'
+                            <div className={`text-gray-200 px-2 ${isOutgoing
+                                ? 'ml-auto text-right'
+                                : ''
                                 }`}>
                                 <div>{content.body}</div>
 
@@ -105,7 +119,7 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
                                                 <img
                                                     src={slide.src}
                                                     alt=""
-                                                    className="w-full h-auto object-cover"
+                                                    className="w-full h-auto max-h-72 object-cover"
                                                 />
                                             </div>
                                         ))}

@@ -22,8 +22,8 @@ export class TimelineService {
         // Wait for all sources to return items
         const itemArrays = await Promise.all(itemPromises);
 
-        // Merge all items and sort by timestamp (newest first)
-        const allItems = itemArrays.flat().sort((a, b) => b.timestamp - a.timestamp);
+        // Merge all items and sort by timestamp (oldest first)
+        const allItems = itemArrays.flat().sort((a, b) => a.timestamp - b.timestamp);
 
         // Return only the requested number of items
         return allItems.slice(0, count);

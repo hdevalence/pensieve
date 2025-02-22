@@ -3,6 +3,20 @@ import { TimelineItem } from '../../types/timeline';
 import { TimelineItemCard } from './TimelineItemCard';
 import Editor from '@monaco-editor/react';
 
+function getThreadColor(threadId: string): string {
+    // Use a hash function to generate a number between 0 and 1
+    const hash = threadId.split('').reduce((acc, char) => {
+        return char.charCodeAt(0) + ((acc << 5) - acc);
+    }, 0);
+
+    // Convert hash to a value between 0 and 360 (hue angle)
+    const hue = Math.abs(hash) % 360;
+
+    // Use fixed saturation and lightness values that work well with dark theme
+    // Low opacity to maintain readability
+    return `hsla(${hue}, 70%, 40%, 0.15)`;
+}
+
 interface TimelineProps {
     startTime: number;
     itemCount?: number;
@@ -68,14 +82,18 @@ export function Timeline({ startTime, itemCount = 50 }: TimelineProps) {
 
     return (
         <div className="space-y-8 p-4">
-            <div className="space-y-4">
+            <div className="">
                 {threadGroups.map((group) => (
-                    <TimelineItemCard key={group.threadId} items={group.items} />
+                    <TimelineItemCard
+                        key={group.threadId}
+                        items={group.items}
+                        backgroundColor={getThreadColor(group.threadId)}
+                    />
                 ))}
             </div>
 
             <div className="border border-gray-700 rounded-lg overflow-hidden">
-                <Editor
+                {/*<Editor
                     height="900px"
                     defaultLanguage="json"
                     value={JSON.stringify(items, null, 2)}
@@ -88,7 +106,7 @@ export function Timeline({ startTime, itemCount = 50 }: TimelineProps) {
                         folding: true,
                         theme: 'vs-dark'
                     }}
-                />
+                />*/}
             </div>
         </div>
     );

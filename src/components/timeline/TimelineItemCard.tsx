@@ -3,9 +3,10 @@ import { SignalMessageCard } from './SignalMessageCard';
 
 interface TimelineItemCardProps {
     items: TimelineItem[];
+    backgroundColor: string;
 }
 
-export function TimelineItemCard({ items }: TimelineItemCardProps) {
+export function TimelineItemCard({ items, backgroundColor }: TimelineItemCardProps) {
     if (items.length === 0) {
         return null;
     }
@@ -40,7 +41,10 @@ export function TimelineItemCard({ items }: TimelineItemCardProps) {
     };
 
     return (
-        <div className="rounded-lg border border-gray-700 bg-gray-800 p-2 shadow-sm hover:shadow-md transition-shadow">
+        <div
+            className="rounded-lg p-2 shadow-sm hover:shadow-md transition-shadow"
+            style={{ backgroundColor }}
+        >
             {renderContent()}
         </div>
     );
