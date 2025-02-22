@@ -11,10 +11,12 @@
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "@signalapp/better-sqlite3": "^8.8.5",
+    "@types/lodash": "^4.17.15",
     "antd": "^5.24.1",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.13",
     "express": "^4.21.2",
+    "lodash": "^4.17.21",
     "next": "14.0.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

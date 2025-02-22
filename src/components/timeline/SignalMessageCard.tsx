@@ -2,6 +2,7 @@ import { SignalMessageContent } from '../../types/timeline';
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import { useState } from 'react';
+import Link from 'next/link';
 
 interface Attachment {
     contentType: string;
@@ -38,6 +39,11 @@ interface SignalMessageCardProps {
 export function SignalMessageCard({ items }: SignalMessageCardProps) {
     const [openLightboxIndex, setOpenLightboxIndex] = useState<number | null>(null);
 
+    const handleTimestampClick = (timestamp: number) => {
+        window.location.href = `/messages#t=${timestamp}`;
+        window.location.reload();
+    };
+
     return (
         <div className="">
             {/* Messages */}
@@ -70,8 +76,13 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
                 return (
                     <div key={index} className="grid grid-cols-12 items-start">
                         {/* Timestamp - 2 columns */}
-                        <div className="col-span-2 text-sm text-gray-400">
-                            {date.toLocaleString()}
+                        <div className="col-span-2 text-xs text-gray-400">
+                            <button
+                                onClick={() => handleTimestampClick(timestamp)}
+                                className="hover:text-gray-200 transition-colors"
+                            >
+                                {date.toLocaleString()}
+                            </button>
                         </div>
 
                         {/* Sender Info - 2 columns */}

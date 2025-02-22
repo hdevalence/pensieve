@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useEffect, RefObject } from 'react';
 import { TimelineItem } from '../../types/timeline';
 import { TimelineItemCard } from './TimelineItemCard';
-import Editor from '@monaco-editor/react';
 
 function getThreadColor(threadId: string): string {
     // Use a hash function to generate a number between 0 and 1
@@ -18,8 +17,8 @@ function getThreadColor(threadId: string): string {
 }
 
 interface TimelineProps {
-    startTime: number;
-    itemCount?: number;
+    items: TimelineItem[];
+    centerRef: RefObject<HTMLDivElement>;
 }
 
 type ThreadGroup = {
@@ -48,65 +47,38 @@ function groupItemsByThread(items: TimelineItem[]): ThreadGroup[] {
     return groups;
 }
 
-export function Timeline({ startTime, itemCount = 50 }: TimelineProps) {
-    const [items, setItems] = useState<TimelineItem[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+export function Timeline({ items, centerRef }: TimelineProps) {
+    const threadGroups = groupItemsByThread(items);
+    const hash = window.location.hash;
+    const centerTimestamp = hash ? parseInt(hash.replace('#t=', '')) : Date.now();
 
     useEffect(() => {
-        async function fetchItems() {
-            try {
-                setLoading(true);
-                const response = await fetch(
-                    `/api/timeline?start=${startTime}&count=${itemCount}`
-                );
-                if (!response.ok) {
-                    throw new Error('Failed to fetch timeline items');
-                }
-                const data = await response.json();
-                setItems(data);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Unknown error');
-            } finally {
-                setLoading(false);
-            }
+        if (centerRef.current) {
+            centerRef.current.scrollIntoView({ behavior: 'auto' });
         }
-
-        fetchItems();
-    }, [startTime, itemCount]);
-
-    if (loading) return <div className="p-4 text-gray-300">Loading timeline...</div>;
-    if (error) return <div className="p-4 text-red-400">Error: {error}</div>;
-
-    const threadGroups = groupItemsByThread(items);
+    }, [items, centerRef]);
 
     return (
         <div className="space-y-8 p-4">
             <div className="space-y-4">
-                {threadGroups.map((group) => (
-                    <TimelineItemCard
-                        key={group.threadId}
-                        items={group.items}
-                        backgroundColor={getThreadColor(group.threadId)}
-                    />
-                ))}
-            </div>
+                {threadGroups.map((group) => {
+                    // Find if this group contains the center item
+                    const containsCenterItem = group.items.some(
+                        item => item.timestamp === centerTimestamp
+                    );
 
-            <div className="border border-gray-700 rounded-lg overflow-hidden">
-                {/*<Editor
-                    height="900px"
-                    defaultLanguage="json"
-                    value={JSON.stringify(items, null, 2)}
-                    options={{
-                        readOnly: true,
-                        minimap: { enabled: false },
-                        scrollBeyondLastLine: false,
-                        wordWrap: 'on',
-                        lineNumbers: 'on',
-                        folding: true,
-                        theme: 'vs-dark'
-                    }}
-                />*/}
+                    return (
+                        <div
+                            key={group.threadId}
+                            ref={containsCenterItem ? centerRef : null}
+                        >
+                            <TimelineItemCard
+                                items={group.items}
+                                backgroundColor={getThreadColor(group.threadId)}
+                            />
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
