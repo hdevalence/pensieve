@@ -1,19 +1,22 @@
 import { useEffect, RefObject } from 'react';
 import { TimelineItem } from '../../types/timeline';
 import { TimelineItemCard } from './TimelineItemCard';
+import { sha256 } from 'js-sha256';
 
 function getThreadColor(threadId: string): string {
-    // Use a hash function to generate a number between 0 and 1
-    const hash = threadId.split('').reduce((acc, char) => {
-        return char.charCodeAt(0) + ((acc << 5) - acc);
-    }, 0);
+    // 1. Compute SHA-256 of the threadId as a hex string
+    const hashHex = sha256(threadId);
 
-    // Convert hash to a value between 0 and 360 (hue angle)
-    const hue = Math.abs(hash) % 360;
+    // 2. Take the first 8 hex characters (which represents 4 bytes)
+    //    and parse them as a 32-bit unsigned integer
+    const firstEightHex = hashHex.slice(0, 8);
+    const numeric = parseInt(firstEightHex, 16);
 
-    // Use fixed saturation and lightness values that work well with dark theme
-    // Low opacity to maintain readability
-    return `hsla(${hue}, 70%, 40%, 0.15)`;
+    // 3. Reduce that value to a hue (0–359)
+    const hue = numeric % 360;
+
+    // 4. Construct an HSLA color string
+    return `hsla(${hue}, 70%, 15%, 1)`;
 }
 
 function getHiddenThreads(): Set<string> {
@@ -69,7 +72,7 @@ export function Timeline({ items, centerRef }: TimelineProps) {
 
     return (
         <div className="space-y-8 p-4">
-            <div className="space-y-4">
+            <div className="space-y-2">
                 {threadGroups.map((group) => {
                     const containsCenterItem = group.items.some(
                         item => item.timestamp === centerTimestamp
