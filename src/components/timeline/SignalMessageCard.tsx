@@ -96,7 +96,7 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
                         </div>
 
                         {/* Sender Info - 2 columns */}
-                        <div className="col-span-2">
+                        <div className="col-span-3">
                             {showSenderName && (
                                 <div className="flex items-center">
                                     <button
@@ -164,7 +164,7 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
                         {/* Message Content - 6 columns with 2 columns spacing */}
                         {isOutgoing && <div className="col-span-2" />}
                         <div
-                            className={`col-span-6 text-gray-200 text-sm px-2 ${isOutgoing ? 'text-right' : ''}`}
+                            className={`col-span-5 text-gray-200 text-sm px-2 ${isOutgoing ? 'text-right' : ''}`}
                         >
                             <div>{content.body}</div>
                             {hasAttachments && (
