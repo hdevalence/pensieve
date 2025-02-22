@@ -13,6 +13,10 @@ export class TimelineService {
         this.sources.push(source);
     }
 
+    getSources(): TimelineSource[] {
+        return this.sources;
+    }
+
     async getTimelineItems(centerTime: number, count: number): Promise<TimelineItem[]> {
         // Calculate how many items to request in each direction
         const prevCount = Math.floor(count / 2);

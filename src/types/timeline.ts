@@ -30,4 +30,16 @@ export interface TimelineSource {
      * ordered by timestamp (oldest first)
      */
     getPrevItems(startTime: number, count: number): Promise<TimelineItem[]>;
+
+    /**
+     * Get the timestamp of the next item in a thread after the given timestamp
+     * Returns null if there is no next item or if the thread doesn't belong to this source
+     */
+    getNextThreadTimestamp(threadId: string, timestamp: number): Promise<number | null>;
+
+    /**
+     * Get the timestamp of the previous item in a thread before the given timestamp
+     * Returns null if there is no previous item or if the thread doesn't belong to this source
+     */
+    getPrevThreadTimestamp(threadId: string, timestamp: number): Promise<number | null>;
 } 

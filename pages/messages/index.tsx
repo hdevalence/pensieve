@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { TimelineItem } from '../../src/types/timeline';
 import { Timeline } from '../../src/components/timeline/Timeline';
 
-const ITEMS_PER_PAGE = 500;
+const ITEMS_PER_PAGE = 200;
 
 export default function MessagesPage() {
     const [items, setItems] = useState<TimelineItem[]>([]);

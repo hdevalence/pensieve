@@ -96,4 +96,52 @@ export class SignalMessageSource implements TimelineSource {
         const results = await this.queryMessages(sql, [startTime, count]);
         return results.reverse();
     }
+
+    async getNextThreadTimestamp(threadId: string, timestamp: number): Promise<number | null> {
+        // Check if this is a signal thread
+        if (!threadId.startsWith('signal-')) {
+            return null;
+        }
+
+        // Extract the conversation ID from the thread ID
+        const conversationId = threadId.replace('signal-', '');
+
+        const db = await connectToDatabase();
+        const sql = `
+            SELECT sent_at
+            FROM messages
+            WHERE conversationId = ?
+            AND sent_at > ?
+            ORDER BY sent_at ASC
+            LIMIT 1;
+        `;
+        const stmt = db.prepare(sql);
+        const result = stmt.get(conversationId, timestamp);
+
+        return result ? result.sent_at : null;
+    }
+
+    async getPrevThreadTimestamp(threadId: string, timestamp: number): Promise<number | null> {
+        // Check if this is a signal thread
+        if (!threadId.startsWith('signal-')) {
+            return null;
+        }
+
+        // Extract the conversation ID from the thread ID
+        const conversationId = threadId.replace('signal-', '');
+
+        const db = await connectToDatabase();
+        const sql = `
+            SELECT sent_at
+            FROM messages
+            WHERE conversationId = ?
+            AND sent_at < ?
+            ORDER BY sent_at DESC
+            LIMIT 1;
+        `;
+        const stmt = db.prepare(sql);
+        const result = stmt.get(conversationId, timestamp);
+
+        return result ? result.sent_at : null;
+    }
 } 

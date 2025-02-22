@@ -88,14 +88,50 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
                         {/* Sender Info - 2 columns */}
                         <div className="col-span-2">
                             {showSenderName && (
-                                <div className="font-medium text-gray-100 text-sm truncate">
-                                    {content.groupName ? (
-                                        <>
-                                            <strong>{content.groupName}</strong> [{content.senderName}]
-                                        </>
-                                    ) : (
-                                        isOutgoing ? content.destName : content.senderName
-                                    )}
+                                <div className="flex items-center ">
+                                    <button
+                                        onClick={async () => {
+                                            const response = await fetch(
+                                                `/api/timeline?action=prevThread&threadId=signal-${content.conversationId}&timestamp=${timestamp}`
+                                            );
+                                            if (response.ok) {
+                                                const data = await response.json();
+                                                if (data.timestamp !== null) {
+                                                    handleTimestampClick(data.timestamp);
+                                                }
+                                            }
+                                        }}
+                                        className="text-gray-400 hover:text-gray-200 transition-colors p-0 leading-none"
+                                        title="Previous message in thread"
+                                    >
+                                        ⬆️
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            const response = await fetch(
+                                                `/api/timeline?action=nextThread&threadId=signal-${content.conversationId}&timestamp=${timestamp}`
+                                            );
+                                            if (response.ok) {
+                                                const data = await response.json();
+                                                if (data.timestamp !== null) {
+                                                    handleTimestampClick(data.timestamp);
+                                                }
+                                            }
+                                        }}
+                                        className="text-gray-400 hover:text-gray-200 transition-colors p-0 leading-none"
+                                        title="Next message in thread"
+                                    >
+                                        ⬇️
+                                    </button>
+                                    <div className="px-2 font-medium text-gray-100 text-sm truncate">
+                                        {content.groupName ? (
+                                            <>
+                                                <strong>{content.groupName}</strong> [{content.senderName}]
+                                            </>
+                                        ) : (
+                                            isOutgoing ? content.destName : content.senderName
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>
