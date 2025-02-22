@@ -1,5 +1,5 @@
 import { useEffect, RefObject } from 'react';
-import { TimelineItem } from '../../types/timeline';
+import { SignalMessageContent, TimelineItem } from '../../types/timeline';
 import { TimelineItemCard } from './TimelineItemCard';
 import { sha256 } from 'js-sha256';
 
@@ -56,6 +56,25 @@ function groupItemsByThread(items: TimelineItem[]): ThreadGroup[] {
     return groups;
 }
 
+function formatChatText(groups: ThreadGroup[]): string {
+    let buffer = '';
+
+    for (const group of groups) {
+        buffer += '<CHAT>\n';
+        for (const item of group.items) {
+            const content = item.content as SignalMessageContent;
+            const isOutgoing = content.type === 'outgoing';
+            const sender = isOutgoing ? 'You' : content.senderName;
+            const receiver = isOutgoing ? content.destName : 'You';
+            const time = new Date(item.timestamp).toLocaleString();
+            buffer += `${time} [${sender}] => [${receiver}]: ${content.body}\n`;
+        }
+        buffer += '</CHAT>\n\n';
+    }
+
+    return buffer;
+}
+
 export function Timeline({ items, centerRef }: TimelineProps) {
     const hiddenThreads = getHiddenThreads();
     const groups = groupItemsByThread(items);
@@ -63,6 +82,12 @@ export function Timeline({ items, centerRef }: TimelineProps) {
 
     const hash = window.location.hash;
     const centerTimestamp = hash ? parseInt(hash.replace('#t=', '')) : Date.now();
+
+    const chatText = formatChatText(threadGroups);
+
+    const handleCopyClick = () => {
+        navigator.clipboard.writeText(chatText);
+    };
 
     useEffect(() => {
         if (centerRef.current) {
@@ -91,6 +116,12 @@ export function Timeline({ items, centerRef }: TimelineProps) {
                     );
                 })}
             </div>
+            <button
+                onClick={handleCopyClick}
+                className="fixed bottom-4 right-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+                Copy Chat Text
+            </button>
         </div>
     );
 } 
