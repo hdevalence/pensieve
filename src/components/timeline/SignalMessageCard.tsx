@@ -38,8 +38,19 @@ interface SignalMessageCardProps {
 
 export function SignalMessageCard({ items }: SignalMessageCardProps) {
     const [openLightboxIndex, setOpenLightboxIndex] = useState<number | null>(null);
+    const [hoveredSender, setHoveredSender] = useState<string | null>(null);
 
     const handleTimestampClick = (timestamp: number) => {
+        window.location.href = `/messages#t=${timestamp}`;
+        window.location.reload();
+    };
+
+    const handleHideThread = (conversationId: string, timestamp: number) => {
+        const threadId = `signal-${conversationId}`;
+        const hidden = localStorage.getItem('hiddenThreads');
+        const hiddenThreads = hidden ? JSON.parse(hidden) : [];
+        hiddenThreads.push(threadId);
+        localStorage.setItem('hiddenThreads', JSON.stringify(hiddenThreads));
         window.location.href = `/messages#t=${timestamp}`;
         window.location.reload();
     };
@@ -58,7 +69,6 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
                 const showSenderName = content.groupName
                     ? !isOutgoing  // Always show sender name in groups for incoming messages
                     : isFirstMessage;  // Only show name for first message in direct conversations
-                const theirName = isOutgoing ? content.destName : content.senderName;
 
                 // Convert attachments to slides if present
                 const slides = hasAttachments
@@ -88,7 +98,7 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
                         {/* Sender Info - 2 columns */}
                         <div className="col-span-2">
                             {showSenderName && (
-                                <div className="flex items-center ">
+                                <div className="flex items-center">
                                     <button
                                         onClick={async () => {
                                             const response = await fetch(
@@ -124,13 +134,28 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
                                         ⬇️
                                     </button>
                                     <div className="px-2 font-medium text-gray-100 text-sm truncate">
-                                        {content.groupName ? (
-                                            <>
-                                                <strong>{content.groupName}</strong> [{content.senderName}]
-                                            </>
-                                        ) : (
-                                            isOutgoing ? content.destName : content.senderName
-                                        )}
+                                        <div
+                                            className="group relative inline-block"
+                                            onMouseEnter={() => setHoveredSender(content.conversationId)}
+                                            onMouseLeave={() => setHoveredSender(null)}
+                                        >
+                                            {hoveredSender === content.conversationId ? (
+                                                <button
+                                                    onClick={() => handleHideThread(content.conversationId, timestamp)}
+                                                    className="text-gray-400 hover:text-gray-200 transition-colors"
+                                                >
+                                                    Hide thread
+                                                </button>
+                                            ) : (
+                                                content.groupName ? (
+                                                    <>
+                                                        <strong>{content.groupName}</strong> [{content.senderName}]
+                                                    </>
+                                                ) : (
+                                                    isOutgoing ? content.destName : content.senderName
+                                                )
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -139,14 +164,12 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
                         {/* Message Content - 6 columns with 2 columns spacing */}
                         {isOutgoing && <div className="col-span-2" />}
                         <div
-                            className={`col-span-6 text-gray-200 px-2 ${isOutgoing ? 'text-right' : ''
-                                }`}
+                            className={`col-span-6 text-gray-200 text-sm px-2 ${isOutgoing ? 'text-right' : ''}`}
                         >
                             <div>{content.body}</div>
                             {hasAttachments && (
                                 <div
-                                    className={`mt-2 flex flex-wrap gap-2 ${isOutgoing ? 'justify-end' : ''
-                                        }`}
+                                    className={`mt-2 flex flex-wrap gap-2 ${isOutgoing ? 'justify-end' : ''}`}
                                 >
                                     {slides.map((slide: Slide, slideIndex: number) => (
                                         <img

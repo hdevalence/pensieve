@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { TimelineItem } from '../../src/types/timeline';
 import { Timeline } from '../../src/components/timeline/Timeline';
+import { GlobalControlPane } from '../../src/components/timeline/GlobalControlPane';
 
 const ITEMS_PER_PAGE = 200;
 
@@ -36,13 +37,20 @@ export default function MessagesPage() {
         loadItems();
     }, []);
 
+    const handleResetFilters = () => {
+        localStorage.removeItem('hiddenThreads');
+        // Force a full page reload to ensure everything is reset
+        window.location.reload();
+    };
+
     if (loading) {
         return <div>Loading...</div>;
     }
 
     return (
         <div ref={containerRef} className="h-screen overflow-y-auto">
-            <div className="max-w-4xl mx-auto">
+            <GlobalControlPane onResetFilters={handleResetFilters} />
+            <div className="max-w-5xl mx-auto">
                 <Timeline items={items} centerRef={centerItemRef} />
             </div>
         </div>

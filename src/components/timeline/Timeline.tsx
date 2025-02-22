@@ -16,6 +16,12 @@ function getThreadColor(threadId: string): string {
     return `hsla(${hue}, 70%, 40%, 0.15)`;
 }
 
+function getHiddenThreads(): Set<string> {
+    if (typeof window === 'undefined') return new Set();
+    const hidden = localStorage.getItem('hiddenThreads');
+    return new Set(hidden ? JSON.parse(hidden) : []);
+}
+
 interface TimelineProps {
     items: TimelineItem[];
     centerRef: RefObject<HTMLDivElement>;
@@ -48,7 +54,10 @@ function groupItemsByThread(items: TimelineItem[]): ThreadGroup[] {
 }
 
 export function Timeline({ items, centerRef }: TimelineProps) {
-    const threadGroups = groupItemsByThread(items);
+    const hiddenThreads = getHiddenThreads();
+    const groups = groupItemsByThread(items);
+    const threadGroups = groups.filter(group => !hiddenThreads.has(group.threadId));
+
     const hash = window.location.hash;
     const centerTimestamp = hash ? parseInt(hash.replace('#t=', '')) : Date.now();
 
@@ -62,7 +71,6 @@ export function Timeline({ items, centerRef }: TimelineProps) {
         <div className="space-y-8 p-4">
             <div className="space-y-4">
                 {threadGroups.map((group) => {
-                    // Find if this group contains the center item
                     const containsCenterItem = group.items.some(
                         item => item.timestamp === centerTimestamp
                     );
