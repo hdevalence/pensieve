@@ -3,7 +3,7 @@ import { TimelineService } from '@/services/timeline';
 
 const timelineService = new TimelineService();
 const DEFAULT_COUNT = 50;
-const MAX_COUNT = 100;
+const MAX_COUNT = 1000;
 
 export default async function handler(
     req: NextApiRequest,

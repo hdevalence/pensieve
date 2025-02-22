@@ -38,28 +38,8 @@ interface SignalMessageCardProps {
 export function SignalMessageCard({ items }: SignalMessageCardProps) {
     const [openLightboxIndex, setOpenLightboxIndex] = useState<number | null>(null);
 
-    // All messages in a thread should have the same conversation details
-    const firstItem = items[0];
-    const { groupName, type: firstMessageType } = firstItem.content;
-
-    // Determine the header name based on whether it's a group or direct message
-    const headerName = groupName || (firstMessageType === 'outgoing'
-        ? firstItem.content.destName
-        : firstItem.content.senderName);
-
     return (
         <div className="">
-            {/* Thread header - always present */}
-            <div className="grid grid-cols-12 items-start">
-                <div className="col-span-2" />
-                <div className="col-span-2">
-                    <div className="font-medium text-gray-300 text-sm">
-                        {groupName ? <i>{headerName}</i> : headerName}
-                    </div>
-                </div>
-                <div className="col-span-8" />
-            </div>
-
             {/* Messages */}
             {items.map((item, index) => {
                 const { content, timestamp } = item;
@@ -67,8 +47,12 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
                 const isOutgoing = content.type === 'outgoing';
                 const hasAttachments = Boolean(content.hasVisualMediaAttachments) && content.json?.attachments?.length > 0;
 
-                // Determine whether to show the sender name
-                const showSenderName = groupName ? !isOutgoing : false;
+                // Determine whether to show the sender name based on new logic
+                const isFirstMessage = index === 0;
+                const showSenderName = content.groupName
+                    ? !isOutgoing  // Always show sender name in groups for incoming messages
+                    : isFirstMessage;  // Only show name for first message in direct conversations
+                const theirName = isOutgoing ? content.destName : content.senderName;
 
                 // Convert attachments to slides if present
                 const slides = hasAttachments
@@ -94,7 +78,13 @@ export function SignalMessageCard({ items }: SignalMessageCardProps) {
                         <div className="col-span-2">
                             {showSenderName && (
                                 <div className="font-medium text-gray-100 text-sm truncate">
-                                    {content.senderName}
+                                    {content.groupName ? (
+                                        <>
+                                            <strong>{content.groupName}</strong> [{content.senderName}]
+                                        </>
+                                    ) : (
+                                        isOutgoing ? content.destName : content.senderName
+                                    )}
                                 </div>
                             )}
                         </div>

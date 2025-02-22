@@ -31,9 +31,9 @@ const Home: React.FC = () => {
                             <input
                                 type="number"
                                 min="1"
-                                max="100"
+                                max="1000"
                                 value={itemCount}
-                                onChange={(e) => setItemCount(Math.max(1, Math.min(100, parseInt(e.target.value) || 50)))}
+                                onChange={(e) => setItemCount(Math.max(1, Math.min(1000, parseInt(e.target.value) || 50)))}
                                 className="mt-1 block w-full rounded-md bg-gray-800 border-gray-700 text-gray-100 focus:border-indigo-500 focus:ring-indigo-500"
                             />
                         </div>
